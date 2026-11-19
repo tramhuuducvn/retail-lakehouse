@@ -4,7 +4,7 @@
 # MAGIC Keeps the latest record per sale_id -> silver.clean_sales.
 
 # COMMAND ----------
-
+from databricks.sdk.runtime import dbutils, spark
 import os
 import sys
 

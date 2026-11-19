@@ -35,6 +35,4 @@ def set_task_value(dbutils: Any, key: str, value: Any) -> Any:
 
 def get_task_value(dbutils: Any, task_key: str, key: str, default: Any, debug_value: Any) -> Any:
     """Read an upstream task value; debug_value is used when running interactively."""
-    return dbutils.jobs.taskValues.get(
-        taskKey=task_key, key=key, default=default, debugValue=debug_value
-    )
+    return dbutils.jobs.taskValues.get(taskKey=task_key, key=key, default=default, debugValue=debug_value)

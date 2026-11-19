@@ -47,8 +47,24 @@ FILE_NAMES = {
     "sales": "sales.csv",
 }
 
-_FIRST_NAMES = ["An", "Binh", "Chi", "Dung", "Giang", "Hai", "Khanh", "Linh", "Minh", "Nam",
-                "Phuong", "Quan", "Thao", "Trung", "Uyen", "Vy"]
+_FIRST_NAMES = [
+    "An",
+    "Binh",
+    "Chi",
+    "Dung",
+    "Giang",
+    "Hai",
+    "Khanh",
+    "Linh",
+    "Minh",
+    "Nam",
+    "Phuong",
+    "Quan",
+    "Thao",
+    "Trung",
+    "Uyen",
+    "Vy",
+]
 _LAST_NAMES = ["Nguyen", "Tran", "Le", "Pham", "Hoang", "Vu", "Vo", "Dang", "Bui", "Do"]
 _SEGMENTS = ["consumer", "corporate", "small_business"]
 _STATUSES = ["completed", "completed", "completed", "shipped", "processing"]

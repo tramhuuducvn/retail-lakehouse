@@ -4,7 +4,7 @@
 # MAGIC Publishes the `duplicate_count` task value used by the `has_sales_duplicates` If/Else condition.
 
 # COMMAND ----------
-
+from databricks.sdk.runtime import dbutils, spark
 import os
 import sys
 

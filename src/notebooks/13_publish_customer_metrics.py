@@ -5,7 +5,7 @@
 # MAGIC gold.category_revenue.
 
 # COMMAND ----------
-
+from databricks.sdk.runtime import dbutils, spark, display
 import os
 import sys
 

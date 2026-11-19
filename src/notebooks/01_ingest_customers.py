@@ -4,7 +4,7 @@
 # MAGIC CSV -> bronze.customers (full refresh).
 
 # COMMAND ----------
-
+from databricks.sdk.runtime import dbutils, spark
 import os
 import sys
 

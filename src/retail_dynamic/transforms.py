@@ -203,12 +203,16 @@ def build_customer_metrics(clean_sales: DataFrame) -> DataFrame:
 
 
 def build_category_revenue(clean_sales: DataFrame) -> DataFrame:
-    return clean_sales.groupBy("category").agg(
-        F.round(F.sum("net_amount"), 2).alias("revenue"),
-        F.sum("quantity").cast("bigint").alias("units"),
-        F.countDistinct("order_id").alias("order_count"),
-        F.count("*").alias("line_count"),
-    ).withColumn("published_at", F.current_timestamp())
+    return (
+        clean_sales.groupBy("category")
+        .agg(
+            F.round(F.sum("net_amount"), 2).alias("revenue"),
+            F.sum("quantity").cast("bigint").alias("units"),
+            F.countDistinct("order_id").alias("order_count"),
+            F.count("*").alias("line_count"),
+        )
+        .withColumn("published_at", F.current_timestamp())
+    )
 
 
 # ----------------------------------------------------------------------------- writers
@@ -227,19 +231,13 @@ def with_conflict_retry(action: Callable[[], T], attempts: int = 4, base_sleep: 
 
 def overwrite_table(df: DataFrame, table: str) -> None:
     """Full refresh: reruns replace the table instead of appending duplicates."""
-    (
-        df.write.format("delta")
-        .mode("overwrite")
-        .option("overwriteSchema", "true")
-        .saveAsTable(table)
-    )
+    (df.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable(table))
 
 
 def ensure_region_metrics_table(spark: SparkSession, table: str) -> None:
     """Create the For Each target up-front, partitioned by region, before iterations start."""
     spark.sql(
-        f"CREATE TABLE IF NOT EXISTS {table} ({REGION_ORDER_METRICS_DDL}) "
-        "USING DELTA PARTITIONED BY (region)"
+        f"CREATE TABLE IF NOT EXISTS {table} ({REGION_ORDER_METRICS_DDL}) USING DELTA PARTITIONED BY (region)"
     )
 
 
@@ -247,8 +245,10 @@ def replace_region(df: DataFrame, table: str, region: str) -> None:
     """Overwrite only one region's partition so parallel iterations never clobber each other."""
     region = validate_region(region)
     with_conflict_retry(
-        lambda: df.write.format("delta")
-        .mode("overwrite")
-        .option("replaceWhere", f"region = '{region}'")
-        .saveAsTable(table)
+        lambda: (
+            df.write.format("delta")
+            .mode("overwrite")
+            .option("replaceWhere", f"region = '{region}'")
+            .saveAsTable(table)
+        )
     )

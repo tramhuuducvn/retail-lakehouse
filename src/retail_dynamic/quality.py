@@ -55,25 +55,37 @@ def ingestion_records(run_id: str, counts: Mapping[str, int | None]) -> list[Aud
     records = []
     for dataset, count in counts.items():
         if count is None:
-            records.append(AuditRecord(run_id, f"ingest_{dataset}", MISSING, None,
-                                       "no rows for this run_id (ingestion failed or skipped)"))
+            records.append(
+                AuditRecord(
+                    run_id,
+                    f"ingest_{dataset}",
+                    MISSING,
+                    None,
+                    "no rows for this run_id (ingestion failed or skipped)",
+                )
+            )
         elif count == 0:
             records.append(AuditRecord(run_id, f"ingest_{dataset}", FAILED, 0.0, "empty table"))
         else:
-            records.append(AuditRecord(run_id, f"ingest_{dataset}", SUCCESS, float(count),
-                                       f"{count} rows"))
+            records.append(AuditRecord(run_id, f"ingest_{dataset}", SUCCESS, float(count), f"{count} rows"))
     return records
 
 
 def duplicate_record(run_id: str, duplicate_count: int, total_rows: int) -> AuditRecord:
     status = WARNING if duplicate_count > 0 else SUCCESS
     branch = "deduplicate_sales" if duplicate_count > 0 else "use_original_sales"
-    return AuditRecord(run_id, "sales_duplicates", status, float(duplicate_count),
-                       f"{duplicate_count} duplicate rows of {total_rows}; branch={branch}")
+    return AuditRecord(
+        run_id,
+        "sales_duplicates",
+        status,
+        float(duplicate_count),
+        f"{duplicate_count} duplicate rows of {total_rows}; branch={branch}",
+    )
 
 
-def reconcile_revenue(region_revenue: float | None, category_revenue: float | None,
-                      tolerance: float = 1.0) -> tuple[str, str]:
+def reconcile_revenue(
+    region_revenue: float | None, category_revenue: float | None, tolerance: float = 1.0
+) -> tuple[str, str]:
     """Region revenue (orders) must match category revenue (clean sales)."""
     if region_revenue is None or category_revenue is None:
         return MISSING, "metrics table not available"
@@ -82,8 +94,9 @@ def reconcile_revenue(region_revenue: float | None, category_revenue: float | No
     return status, f"region={region_revenue:.2f} category={category_revenue:.2f} diff={diff:.2f}"
 
 
-def overall_status(latest: Mapping[str, str],
-                   expected: Iterable[str] = EXPECTED_CHECKS) -> tuple[str, list[str]]:
+def overall_status(
+    latest: Mapping[str, str], expected: Iterable[str] = EXPECTED_CHECKS
+) -> tuple[str, list[str]]:
     """Return (overall_status, failed_checks). WARNING counts as healthy."""
     failed = [name for name in expected if latest.get(name) not in (SUCCESS, WARNING)]
     return (SUCCESS if not failed else FAILED), failed

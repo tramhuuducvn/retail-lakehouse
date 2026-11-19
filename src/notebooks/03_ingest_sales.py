@@ -4,7 +4,7 @@
 # MAGIC CSV -> bronze.sales (full refresh; duplicates are kept here on purpose).
 
 # COMMAND ----------
-
+from databricks.sdk.runtime import dbutils, spark
 import os
 import sys
 

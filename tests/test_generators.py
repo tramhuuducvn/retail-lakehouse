@@ -93,7 +93,7 @@ def test_duplicate_injection_on_is_2_to_5_percent(clean, dirty):
 
 def test_duplicates_are_later_versions_of_existing_sales(clean, dirty):
     originals = {s["sale_id"]: s for s in clean.sales}
-    for dup in dirty.sales[len(clean.sales):]:
+    for dup in dirty.sales[len(clean.sales) :]:
         original = originals[dup["sale_id"]]
         assert dup["updated_at"] > original["updated_at"]
         assert dup["net_amount"] == original["net_amount"]

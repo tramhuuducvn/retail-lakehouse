@@ -5,7 +5,7 @@
 # MAGIC still present).
 
 # COMMAND ----------
-
+from databricks.sdk.runtime import dbutils, spark
 import os
 import sys
 

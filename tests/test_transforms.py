@@ -17,8 +17,21 @@ SALES_ROWS_DDL = (
 
 
 def _sale(sale_id, quantity, updated_at, region="north", price=10.0, discount=0.0, category="home"):
-    return (sale_id, sale_id.split("-")[0], "C1", "Nguyen An", region, "consumer", "P1", category,
-            quantity, price, discount, round(quantity * price * (1 - discount), 2), updated_at)
+    return (
+        sale_id,
+        sale_id.split("-")[0],
+        "C1",
+        "Nguyen An",
+        region,
+        "consumer",
+        "P1",
+        category,
+        quantity,
+        price,
+        discount,
+        round(quantity * price * (1 - discount), 2),
+        updated_at,
+    )
 
 
 @pytest.fixture(scope="module")

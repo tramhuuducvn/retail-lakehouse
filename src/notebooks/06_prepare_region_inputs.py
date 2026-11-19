@@ -4,7 +4,7 @@
 # MAGIC Creates the partitioned For Each target table and publishes the `regions` task value.
 
 # COMMAND ----------
-
+from databricks.sdk.runtime import dbutils, spark
 import os
 import sys
 

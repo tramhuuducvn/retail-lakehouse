@@ -37,8 +37,14 @@ def test_region_inputs_cover_all_regions():
 
 
 def test_job_config_table_names():
-    cfg = JobConfig.from_params({"catalog": "workspace", "gold_schema": "dev_x_retail_dyn_gold",
-                                 "inject_duplicates": "true", "record_scale": "2"})
+    cfg = JobConfig.from_params(
+        {
+            "catalog": "workspace",
+            "gold_schema": "dev_x_retail_dyn_gold",
+            "inject_duplicates": "true",
+            "record_scale": "2",
+        }
+    )
     assert cfg.table("gold", "region_metrics") == "workspace.dev_x_retail_dyn_gold.region_metrics"
     assert cfg.inject_duplicates is True and cfg.record_scale == 2
 
@@ -46,8 +52,7 @@ def test_job_config_table_names():
 def test_ingestion_records_statuses():
     records = quality.ingestion_records("r1", {"customers": 10, "orders": None, "sales": 0})
     statuses = {r.check_name: r.status for r in records}
-    assert statuses == {"ingest_customers": "SUCCESS", "ingest_orders": "MISSING",
-                        "ingest_sales": "FAILED"}
+    assert statuses == {"ingest_customers": "SUCCESS", "ingest_orders": "MISSING", "ingest_sales": "FAILED"}
 
 
 def test_duplicate_record_status():

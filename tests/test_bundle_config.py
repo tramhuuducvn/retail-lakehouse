@@ -10,8 +10,14 @@ import pytest
 yaml = pytest.importorskip("yaml")
 
 ROOT = Path(__file__).resolve().parents[1]
-VALID_RUN_IF = {"ALL_SUCCESS", "AT_LEAST_ONE_SUCCESS", "NONE_FAILED", "ALL_DONE",
-                "AT_LEAST_ONE_FAILED", "ALL_FAILED"}
+VALID_RUN_IF = {
+    "ALL_SUCCESS",
+    "AT_LEAST_ONE_SUCCESS",
+    "NONE_FAILED",
+    "ALL_DONE",
+    "AT_LEAST_ONE_FAILED",
+    "ALL_FAILED",
+}
 
 
 def _load(path: str) -> dict:
@@ -43,9 +49,11 @@ def test_bundle_targets_and_variables():
 def test_job_settings(job):
     assert job["name"] == "retail-dynamic-workflow-job"
     assert job["max_concurrent_runs"] == 1
-    assert job["schedule"] == {"quartz_cron_expression": "0 0/30 * * * ?",
-                               "timezone_id": "Asia/Ho_Chi_Minh",
-                               "pause_status": "${var.schedule_pause_status}"}
+    assert job["schedule"] == {
+        "quartz_cron_expression": "0 0/30 * * * ?",
+        "timezone_id": "Asia/Ho_Chi_Minh",
+        "pause_status": "${var.schedule_pause_status}",
+    }
     assert _load("databricks.yml")["variables"]["schedule_pause_status"]["default"] == "PAUSED"
     assert "job_clusters" not in job
     params = {p["name"] for p in job["parameters"]}
@@ -87,8 +95,9 @@ def test_if_else_condition(tasks):
     cond = tasks["has_sales_duplicates"]["condition_task"]
     assert cond["op"] == "GREATER_THAN" and cond["right"] == "0"
     assert cond["left"] == "{{tasks.check_sales_duplicates.values.duplicate_count}}"
-    outcomes = {d.get("outcome") for t in ("deduplicate_sales", "use_original_sales")
-                for d in tasks[t]["depends_on"]}
+    outcomes = {
+        d.get("outcome") for t in ("deduplicate_sales", "use_original_sales") for d in tasks[t]["depends_on"]
+    }
     assert outcomes == {"true", "false"}
 
 

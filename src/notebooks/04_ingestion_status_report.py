@@ -4,7 +4,7 @@
 # MAGIC Runs if AT_LEAST_ONE ingestion succeeded. Records per-dataset status for this run_id.
 
 # COMMAND ----------
-
+from databricks.sdk.runtime import dbutils, spark
 import os
 import sys
 

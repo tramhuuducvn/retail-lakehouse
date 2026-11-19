@@ -4,7 +4,7 @@
 # MAGIC No duplicates: pass data through with the SAME schema -> silver.clean_sales.
 
 # COMMAND ----------
-
+from databricks.sdk.runtime import dbutils, spark
 import os
 import sys
 

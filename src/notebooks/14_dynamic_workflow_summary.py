@@ -5,7 +5,7 @@
 # MAGIC check is missing/failed.
 
 # COMMAND ----------
-
+from databricks.sdk.runtime import dbutils, spark, display
 import os
 import sys
 
@@ -47,9 +47,18 @@ dup_rows = [row["metric_value"] for row in rows if row["check_name"] == "sales_d
 overall, failed = quality.overall_status(latest)
 
 run_row = spark.createDataFrame(
-    [(cfg.run_id, overall, cfg.inject_duplicates, cfg.record_scale,
-      int(dup_rows[0]) if dup_rows and dup_rows[0] is not None else None,
-      region_revenue, category_revenue, ",".join(failed))],
+    [
+        (
+            cfg.run_id,
+            overall,
+            cfg.inject_duplicates,
+            cfg.record_scale,
+            int(dup_rows[0]) if dup_rows and dup_rows[0] is not None else None,
+            region_revenue,
+            category_revenue,
+            ",".join(failed),
+        )
+    ],
     "run_id STRING, overall_status STRING, inject_duplicates BOOLEAN, record_scale INT, "
     "duplicate_count BIGINT, region_revenue DOUBLE, category_revenue DOUBLE, failed_checks STRING",
 ).withColumn("recorded_at", F.current_timestamp())
