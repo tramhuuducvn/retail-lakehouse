@@ -1,0 +1,174 @@
+# Lakeflow Job: retail-dynamic-workflow-job
+# Demonstrates concurrent ingestion, run_if, If/Else, For Each, ALL_DONE audit and a dashboard task.
+# No job_clusters / new_cluster: notebook tasks run on serverless jobs compute.
+resources:
+  jobs:
+    dynamic_retail_job:
+      name: retail-dynamic-workflow-job
+      description: >-
+        Generates synthetic retail files, ingests them concurrently, processes regions with
+        For Each, deduplicates sales via If/Else, refreshes an AI/BI dashboard and audits the run.
+      max_concurrent_runs: 1
+      timeout_seconds: 3600
+      queue:
+        enabled: true
+      schedule:
+        quartz_cron_expression: "0 0/30 * * * ?"
+        timezone_id: Asia/Ho_Chi_Minh
+        pause_status: ${var.schedule_pause_status}
+      tags:
+        project: retail-dynamic-workflow
+
+      parameters:
+        - name: catalog
+          default: ${var.catalog}
+        - name: raw_schema
+          default: ${resources.schemas.raw.name}
+        - name: bronze_schema
+          default: ${resources.schemas.bronze.name}
+        - name: silver_schema
+          default: ${resources.schemas.silver.name}
+        - name: gold_schema
+          default: ${resources.schemas.gold.name}
+        - name: audit_schema
+          default: ${resources.schemas.audit.name}
+        - name: volume_path
+          default: /Volumes/${var.catalog}/${resources.schemas.raw.name}/${resources.volumes.source_files.name}
+        - name: record_scale
+          default: ${var.record_scale}
+        - name: inject_duplicates
+          default: ${var.inject_duplicates}
+        - name: seed
+          default: "42"
+        - name: run_id
+          default: "{{job.run_id}}"
+
+      tasks:
+        # ---------------------------------------------------------------- generate
+        - task_key: generate_source_files
+          notebook_task:
+            notebook_path: ../src/notebooks/00_generate_source_files.py
+
+        # ---------------------------------------------------------------- ingest (concurrent)
+        - task_key: ingest_customers
+          depends_on:
+            - task_key: generate_source_files
+          notebook_task:
+            notebook_path: ../src/notebooks/01_ingest_customers.py
+
+        - task_key: ingest_orders
+          depends_on:
+            - task_key: generate_source_files
+          notebook_task:
+            notebook_path: ../src/notebooks/02_ingest_orders.py
+
+        - task_key: ingest_sales
+          depends_on:
+            - task_key: generate_source_files
+          notebook_task:
+            notebook_path: ../src/notebooks/03_ingest_sales.py
+
+        - task_key: ingestion_status_report
+          depends_on:
+            - task_key: ingest_customers
+            - task_key: ingest_orders
+            - task_key: ingest_sales
+          run_if: AT_LEAST_ONE_SUCCESS
+          notebook_task:
+            notebook_path: ../src/notebooks/04_ingestion_status_report.py
+
+        # ---------------------------------------------------------------- region branch
+        - task_key: join_customers_orders
+          depends_on:
+            - task_key: ingest_customers
+            - task_key: ingest_orders
+          notebook_task:
+            notebook_path: ../src/notebooks/05_join_customers_orders.py
+
+        - task_key: prepare_region_inputs
+          depends_on:
+            - task_key: join_customers_orders
+          notebook_task:
+            notebook_path: ../src/notebooks/06_prepare_region_inputs.py
+
+        - task_key: for_each_region
+          depends_on:
+            - task_key: prepare_region_inputs
+          for_each_task:
+            inputs: "{{tasks.prepare_region_inputs.values.regions}}"
+            concurrency: ${var.for_each_concurrency}
+            task:
+              task_key: process_region
+              max_retries: 1
+              notebook_task:
+                notebook_path: ../src/notebooks/07_process_region.py
+                base_parameters:
+                  region: "{{input}}"
+
+        - task_key: publish_region_metrics
+          depends_on:
+            - task_key: for_each_region # the For Each container, not process_region
+          notebook_task:
+            notebook_path: ../src/notebooks/08_publish_region_metrics.py
+
+        # ---------------------------------------------------------------- customer/sales branch
+        - task_key: join_customer_sales
+          depends_on:
+            - task_key: ingest_customers
+            - task_key: ingest_sales
+          notebook_task:
+            notebook_path: ../src/notebooks/09_join_customer_sales.py
+
+        - task_key: check_sales_duplicates
+          depends_on:
+            - task_key: join_customer_sales
+          notebook_task:
+            notebook_path: ../src/notebooks/10_check_sales_duplicates.py
+
+        - task_key: has_sales_duplicates
+          depends_on:
+            - task_key: check_sales_duplicates
+          condition_task:
+            op: GREATER_THAN
+            left: "{{tasks.check_sales_duplicates.values.duplicate_count}}"
+            right: "0"
+
+        - task_key: deduplicate_sales
+          depends_on:
+            - task_key: has_sales_duplicates
+              outcome: "true"
+          notebook_task:
+            notebook_path: ../src/notebooks/11_deduplicate_sales.py
+
+        - task_key: use_original_sales
+          depends_on:
+            - task_key: has_sales_duplicates
+              outcome: "false"
+          notebook_task:
+            notebook_path: ../src/notebooks/12_use_original_sales.py
+
+        - task_key: publish_customer_metrics
+          depends_on:
+            - task_key: deduplicate_sales
+            - task_key: use_original_sales
+          run_if: AT_LEAST_ONE_SUCCESS # exactly one branch runs, the other is excluded
+          notebook_task:
+            notebook_path: ../src/notebooks/13_publish_customer_metrics.py
+
+        # ---------------------------------------------------------------- dashboard + audit
+        - task_key: refresh_dashboard
+          depends_on:
+            - task_key: publish_region_metrics
+            - task_key: publish_customer_metrics
+          run_if: AT_LEAST_ONE_SUCCESS
+          dashboard_task:
+            dashboard_id: ${resources.dashboards.retail_dashboard.id}
+            warehouse_id: ${var.warehouse_id}
+
+        - task_key: dynamic_workflow_summary
+          depends_on:
+            - task_key: refresh_dashboard
+            - task_key: ingestion_status_report
+          run_if: ALL_DONE
+          notebook_task:
+            notebook_path: ../src/notebooks/14_dynamic_workflow_summary.py

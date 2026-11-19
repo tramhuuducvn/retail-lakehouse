@@ -1,0 +1,46 @@
+# Databricks Asset Bundle: retail-dynamic-workflow
+# Standalone project. Serverless compute only (Databricks Free Edition compatible).
+bundle:
+  name: retail-dynamic-workflow
+
+include:
+  - resources/*.yml
+
+variables:
+  catalog:
+    description: Unity Catalog catalog that holds all schemas (Free Edition default is "workspace").
+    default: workspace
+  schema_prefix:
+    description: Prefix for the _raw, _bronze, _silver, _gold and _audit schemas.
+    default: retail_dyn
+  warehouse_id:
+    description: >-
+      SQL warehouse used by the AI/BI dashboard and the dashboard refresh task.
+      Resolved by name; change the name if your warehouse is called differently.
+    lookup:
+      warehouse: "Serverless Starter Warehouse"
+  for_each_concurrency:
+    description: Parallel For Each iterations (Free Edition allows max 5 concurrent job tasks).
+    default: 2
+  schedule_pause_status:
+    description: PAUSED or UNPAUSED for the 30-minute schedule (dev mode always keeps it paused).
+    default: PAUSED
+  record_scale:
+    description: Default multiplier for synthetic data volume (job parameter default).
+    default: "1"
+  inject_duplicates:
+    description: Default for the inject_duplicates job parameter ("true" / "false").
+    default: "false"
+
+targets:
+  dev:
+    mode: development
+    default: true
+
+  prod:
+    mode: production
+    workspace:
+      root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
+    permissions:
+      - user_name: ${workspace.current_user.userName}
+        level: CAN_MANAGE

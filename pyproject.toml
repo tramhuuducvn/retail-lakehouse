@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "retail-dynamic-workflow"
+version = "0.1.0"
+description = "Databricks Lakeflow Job demo: run_if, If/Else, For Each, ALL_DONE audit and dashboard refresh"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []  # Spark is provided by Databricks serverless at runtime
+
+[project.optional-dependencies]
+dev = [
+    "pyspark>=3.5,<4.1",
+    "pytest>=8",
+    "pyyaml>=6",
+    "ruff>=0.6",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["retail_dynamic*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+extend-exclude = [".databricks"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+# Databricks notebooks: spark/dbutils/display are injected globals; imports follow sys.path setup.
+"src/notebooks/*.py" = ["F821", "E402", "I001"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["retail_dynamic"]

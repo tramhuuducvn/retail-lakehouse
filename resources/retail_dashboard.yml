@@ -1,0 +1,41 @@
+# Unity Catalog objects + AI/BI dashboard for retail-dynamic-workflow.
+resources:
+  schemas:
+    raw:
+      catalog_name: ${var.catalog}
+      name: ${var.schema_prefix}_raw
+      comment: Raw landing zone (Volume with generated source files)
+    bronze:
+      catalog_name: ${var.catalog}
+      name: ${var.schema_prefix}_bronze
+      comment: Raw files ingested as Delta tables
+    silver:
+      catalog_name: ${var.catalog}
+      name: ${var.schema_prefix}_silver
+      comment: Joined, validated and deduplicated data
+    gold:
+      catalog_name: ${var.catalog}
+      name: ${var.schema_prefix}_gold
+      comment: Business metrics read by the dashboard
+    audit:
+      catalog_name: ${var.catalog}
+      name: ${var.schema_prefix}_audit
+      comment: Task and run audit log
+
+  volumes:
+    source_files:
+      catalog_name: ${var.catalog}
+      # Referencing the schema resource makes the bundle create it before the volume.
+      schema_name: ${resources.schemas.raw.name}
+      name: source_files
+      volume_type: MANAGED
+      comment: Synthetic customers (CSV), orders (JSON) and sales (CSV)
+
+  dashboards:
+    retail_dashboard:
+      display_name: Retail Dynamic Workflow
+      file_path: ../src/dashboards/retail_dashboard.lvdash.json
+      warehouse_id: ${var.warehouse_id}
+      # Dashboard queries use unqualified table names; these resolve them to the gold schema.
+      dataset_catalog: ${var.catalog}
+      dataset_schema: ${resources.schemas.gold.name}

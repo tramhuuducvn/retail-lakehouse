@@ -1,0 +1,27 @@
+# Databricks bundle state
+.databricks/
+.bundle/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# Test / lint caches
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+spark-warehouse/
+metastore_db/
+derby.log
+
+# Local data / IDE
+data/
+.idea/
+.vscode/
+.DS_Store
